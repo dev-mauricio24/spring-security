@@ -1,6 +1,9 @@
 package com.springsecurity.springsecurity.config;
 
+import com.springsecurity.springsecurity.filter.JWTValidatorFilter;
 import com.springsecurity.springsecurity.service.implementation.UserDetailServiceImpl;
+import com.springsecurity.springsecurity.utils.helpers.JWTUtils;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -13,22 +16,18 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
-
-import java.util.ArrayList;
-import java.util.List;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final JWTUtils jwtUtils;
 
     @Bean
     public SecurityFilterChain configure(HttpSecurity httpSecurity) throws Exception {
@@ -40,18 +39,15 @@ public class SecurityConfig {
                 .authorizeHttpRequests(http -> {
 
                     // Configurar Endpoints publicos
-                    http.requestMatchers(HttpMethod.GET, "/api/auth/hello").permitAll();
-                    http.requestMatchers(HttpMethod.POST, "/api/auth/register/user").permitAll();
-                    http.requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll();
+                    http.requestMatchers(HttpMethod.POST, "/auth/**").permitAll();
 
                     // Configurar Endpoints privados
-                    http.requestMatchers(HttpMethod.GET, "/api/auth/secured").hasAuthority("READ");
-                    http.requestMatchers(HttpMethod.GET, "/api/auth/secured2").hasAuthority("CREATE");
 
                     // Configurar el resto de endpoint - NO ESPECIFICADOS
                     http.anyRequest().denyAll();
 
                 })
+                .addFilterBefore(new JWTValidatorFilter(jwtUtils), BasicAuthenticationFilter.class)
                 .build();
     }
 
@@ -68,37 +64,10 @@ public class SecurityConfig {
         return provider;
     }
 
-    /*@Bean
-    public UserDetailsService userDetailsService() {
-        List<UserDetails> users = new ArrayList<UserDetails>();
-
-        users.add(
-                User.withUsername("Mauricio")
-                        .password("1234")
-                        .roles("ADMIN")
-                        .authorities("READ", "CREATE")
-                        .build()
-        );
-
-        users.add(
-                User.withUsername("Santiago")
-                        .password("1234")
-                        .roles("USER")
-                        .authorities("READ")
-                        .build()
-        );
-        return new InMemoryUserDetailsManager(users);
-    }*/
-
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
-   /* @Bean
-    public PasswordEncoder passwordEncoder() {
-        return  NoOpPasswordEncoder.getInstance();
-    }*/
 
     public static void main(String[] args) {
         System.out.println(new BCryptPasswordEncoder().encode("1234"));

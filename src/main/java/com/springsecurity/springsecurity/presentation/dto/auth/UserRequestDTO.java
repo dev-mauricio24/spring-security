@@ -1,7 +1,10 @@
 package com.springsecurity.springsecurity.presentation.dto.auth;
 
 import com.springsecurity.springsecurity.utils.enums.RoleEnum;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.Set;
 
@@ -11,13 +14,12 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
+@Validated
 public class UserRequestDTO {
-    private Long id;
+    @NotBlank(message = "El nombre de usuario no debe estar vacío")
     private String username;
+    @NotBlank(message = "La contraseña no debe estar vacía")
     private String password;
-    private boolean enabled;
-    private boolean accountNoExpired;
-    private boolean accountNoLocked;
-    private boolean credentialNoExpired;
+    @NotNull(message = "Debe enviar al menos un rol")
     private Set<RoleEnum> roles;
 }
